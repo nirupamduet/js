@@ -1,0 +1,350 @@
+/*
+* URL Hash Management Library
+* Nirupam Modak
+* Email : nirupam.duet@gmail.com
+* Skype : nirupam.duet 
+* Copyright (c) 2018 Nirupam Modak
+*/
+var Hash = {
+    /*
+     * Enable encoding/decoding 
+     * if you want to see what is adding/removing in URL exactly
+     * for debugging
+     */
+    enableUrlEncoding: false,
+    /*
+     * Prepare array of form url hash
+     * @input                   => #cid=56&mid=85
+     * @output  paramsObject{}  => { cid: "56", mid: "85" }
+     */
+    fromHash : function () {
+        var params = window.location.hash ? window.location.hash.substr(1).split("&") : [],
+            paramsObject = {};
+
+        for (var i = 0; i < params.length; i++) {
+            var a = params[i].split("=");
+            if (this.enableUrlEncoding)
+                paramsObject[a[0]] = decodeURIComponent(a[1]);
+            else
+                paramsObject[a[0]] = a[1];
+        }
+        return paramsObject;
+    },
+    /*
+     * Set hash param to url after #
+     * @param   => params{} 
+     * @input   => { cid: "56", mid: "85" }
+     * @output  => #cid=56&mid=85
+     */
+    toHash: function (params) {
+        var str = [];
+        for (var p in params) {
+            if (this.enableUrlEncoding)
+                str.push(p + "=" + encodeURIComponent(params[p]));
+            else
+                str.push(p + "=" + params[p]);
+        }
+        window.location.hash = str.join("&");
+    },
+    /*
+     * Get a param value after hash
+     * @input   => name of param
+     * @output  => value of a param
+     */
+    get: function (param) {
+        var params = this.fromHash();
+        if (param) {
+            return params[param];
+        } else {
+            return params;
+        }
+    },
+    /*
+     * Add new parameter to url after hash and update hash
+     * @input   => {name:value}
+     * @output  => set hash param
+     */
+    add: function (newParams) {
+        var params = this.fromHash();
+        for (var p in newParams) {
+            params[p] = newParams[p];
+        }
+        this.toHash(params);
+    },
+    /*
+     * Remove hash param form url after hash
+     * @input   => paramname
+     * @output  => set hash param after removing
+     */
+    remove: function (removeParams) {
+        removeParams = (typeof (removeParams) == 'string') ? [removeParams] : removeParams;
+        var params = this.fromHash();
+        for (var i = 0; i < removeParams.length; i++) {
+            delete params[removeParams[i]];
+        }
+        this.toHash(params);
+    },
+    /*
+     * Update parameter if exist or add if new 
+     * to url after hash and update hash
+     * @input   => {name:value}
+     * @output  => set hash param
+     */
+    update: function (newParams) {
+        var params = this.fromHash();
+        for (var p in newParams) {
+            params[p] = params[p] + ","+ newParams[p];
+        }
+        this.toHash(params);
+    },
+    /*
+     * Clear URL hash param after hash
+     */
+    clear: function () {
+        this.toHash({});
+    }
+};
+
+/*
+ * Facted Manager(category/vendor/manufcturer/search)
+ * Nirupam Modak
+ * Email : nirupam.duet@gmail.com
+ * Skype : nirupam.duet
+ * Written on : 07.08.2018 
+ * Re-written due to lost of original files missed when saved as stash (git)
+ * My BAD
+ * */
+var FactedManager = {
+    brand: '#accordian-brand',
+    vendor: '#accordian-vendor',
+    attribute: '#accordian-vendor',
+    brandSelector: "input.checkboxBrandfilter",
+    vendorSelector: "input.checkboxVendorfilter",
+    priceSelector: "input.checkboxPricefilter",
+    specsSelector:"div.dvfilterBySpecs",
+    vid: "vid",
+    mid: "mid",
+    priceid: "price",
+    specId: "specs",
+    attriSpecsCount: 0,
+
+    /*
+     * init configuration of facted
+     */
+    init: function () {
+        this.initBrand();
+        this.initVendor();
+        this.initSpecs();
+        this.initPrice();
+    },
+    /*
+     * Filter(show/hide) li under an ul
+     * based on the value inner element of a input
+     */
+    filterData: function filterData(el) {
+        var filter = $(el).find(".facted-search input").val().toLowerCase();
+        var ul = $(el).find("ul");
+        var li = $(ul).find('li');
+        for (var i = 0; i < li.length; i++) {
+            var a = li[i].getElementsByTagName("a")[0];
+            if (a.innerHTML.toLowerCase().indexOf(filter) > -1) {
+                li[i].style.display = "";
+            } else {
+                li[i].style.display = "none";
+            }
+        }
+    },
+    /*
+     * Manufacturer facted
+     * @el      => input element
+     * @output  => set hash to url based on 
+     * the value of input element(data-facted='mid=51')
+     */
+    triggerBrand: function (el) {
+        var d = $(el).attr("data-facted");
+        if (d) {
+            var v = d.split("=")[1];
+            if (v) {
+                if ($(el).is(":checked")) {
+                    if (Hash.get("mid"))
+                        v = Hash.get("mid") + "," + v;
+                    Hash.add({ "mid": v });
+                }
+                else {
+                    if (Hash.get("mid")) {
+                        var arr = Hash.get("mid").split(",");
+                        var idx = arr.indexOf(v);
+                        if (idx > -1)
+                            arr.splice(idx, 1);
+                        v = arr.join(",");
+                    }
+                    Hash.add({ "mid": v });
+                }
+            }
+        }
+    },
+      /*
+     * Vendor facted
+     * @el      => input element
+     * @output  => set hash to url based on 
+     * the value of input element(data-facted='vid=51')
+     */
+    triggerVendor: function (el) {
+        var d = $(el).attr("data-facted");
+        if (d) {
+            var v = d.split("=")[1];
+            if (v) {
+                if ($(el).is(":checked")) {
+                    if (Hash.get("vid"))
+                        v = Hash.get("vid") + "," + v;
+                    Hash.add({ "vid": v });
+                }
+                else {
+                    if (Hash.get("vid")) {
+                        var arr = Hash.get("vid").split(",");
+                        var idx = arr.indexOf(v);
+                        if (idx > -1)
+                            arr.splice(idx, 1);
+                        v = arr.join(",");
+                    }
+                    Hash.add({ "vid": v });
+                }
+            }
+        }
+    },
+     /*
+     * Specification facted
+     * @el      => input element
+     * @output  => set hash to url based on 
+     * the value of input element(data-facted='specs=51')
+     */
+    triggerSpecs: function (el) {
+        var d = $(el).attr("data-facted");
+        var id = $(el).closest("div.dvfilterBySpecs").attr("data-groupId");
+        if (d) {
+            var v = d.split("=")[1];
+            if (v) {
+                if ($(el).is(":checked")) {
+                    if (Hash.get("specs"))
+                        v = Hash.get("specs") + "," + v;
+                    Hash.add({ "specs": v });
+                }
+                else {
+                    if (Hash.get("specs")) {
+                        var arr = Hash.get("specs").split(",");
+                        var idx = arr.indexOf(v);
+                        if (idx > -1)
+                            arr.splice(idx, 1);
+                        v = arr.join(",");
+                    }
+                    Hash.add({ "specs": v });
+                }
+            }
+        }
+    },
+     /*
+     * Price facted
+     * @el      => input element
+     * @output  => set hash to url based on 
+     * the value of input element(data-facted='price=51')
+     */
+    triggerPrice: function (el) {
+        var d = $(el).attr("data-facted");
+        if (d) {
+            var v = d.split("=")[1];
+            if (v) {
+                if ($(el).is(":checked")) {
+                    if (Hash.get("price"))
+                        v = Hash.get("price") + "," + v;
+                    Hash.add({ "price": v });
+                }
+                else {
+                    if (Hash.get("price")) {
+                        var arr = Hash.get("price").split(",");
+                        var idx = arr.indexOf(v);
+                        if (idx > -1)
+                            arr.splice(idx, 1);
+                        v = arr.join(",");
+                    }
+                    Hash.add({ "price": v });
+                }
+            }
+        }
+    },
+     /*
+     * Number of Specfication
+     */
+    setSpecsCount: function (c) {
+        this.attriSpecsCount = parseInt(c);
+    },
+     /*
+     * Brand checkbox check/uncheck 
+     * based on url hash when first 
+     * time page is loading with some hash 
+     * @output  => check/uncheck the checkboxes
+     */
+    initBrand: function () {
+        if (Hash.get("mid")) {
+            var arr = Hash.get("mid").split(",");
+            if ($(this.brandSelector).length > 0) {
+                arr.forEach(function (v) {
+                    $("input.checkboxBrandfilter[data-facted='mid="+v+"']").prop("checked", true);
+                });
+            }
+        }
+    },
+    /*
+     * Vendor checkbox check/uncheck 
+     * based on url hash when first 
+     * time page is loading with some hash 
+     * @output  => check/uncheck the checkboxes
+     */
+    initVendor: function () {
+        if (Hash.get("vid")) {
+            var arr = Hash.get("vid").split(",");
+            if ($(this.vendorSelector).length > 0) {
+                arr.forEach(function (v) {
+                    $("input.checkboxVendorfilter[data-facted='vid=" + v + "']").prop("checked", true);
+                });
+            }
+        }
+    },
+     /*
+     * Specification checkbox check/uncheck 
+     * based on url hash when first 
+     * time page is loading with some hash 
+     * @output  => check/uncheck the checkboxes
+     */
+    initSpecs: function () {
+        if (Hash.get("specs")) {
+            var arr = Hash.get("specs").split(",");
+            if ($(this.vendorSelector).length > 0) {
+                arr.forEach(function (v) {
+                    $("input.checkboxSpecfilter[data-facted='specs=" + v + "']").prop("checked", true);
+                });
+            }
+        }
+    },
+     /*
+     * price checkbox check/uncheck 
+     * based on url hash when first 
+     * time page is loading with some hash 
+     * @output  => check/uncheck the checkboxes
+     */
+    initPrice: function () {
+        if (Hash.get("price")) {
+            var arr = Hash.get("price").split(",");
+            if ($(this.priceSelector).length > 0) {
+                arr.forEach(function (v) {
+                    $("input.checkboxPricefilter[data-facted='price=" + v + "']").prop("checked", true);
+                });
+            }
+        }
+    }
+}
+
+
+/*Prevent Scrolling when URL hash is changed*/
+//var scr = document.body.scrollTop;
+//window.location.href = '#';
+//document.body.scrollTop = scr;
